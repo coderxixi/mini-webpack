@@ -1,5 +1,3 @@
-import sum from "./main"
-import bar from "./bar";
-sum();
-bar()
-console.log('sum');
+export function sum(a, b) {
+  return a + b
+}

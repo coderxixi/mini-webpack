@@ -1,3 +1,5 @@
- export function bar(){
+import foo from "./foo.js"
+
+export function bar(){
 
 }
