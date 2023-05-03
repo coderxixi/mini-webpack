@@ -4,7 +4,9 @@ import traverse from "@babel/traverse";
 import {transformFromAst} from "babel-core"
 import path from "path";
 import ejs from "ejs";
-import {jsonLoader} from "./jsonLoader.js"
+import { SyncHook } from "tapable";
+import {jsonLoader} from "./jsonLoader.js";
+import { ChangeOutPutPath } from  "./changeOutPutPath.js"
 const webpackConfig={
   module:{
     rules:[
@@ -13,8 +15,24 @@ const webpackConfig={
         use:jsonLoader
       }
     ]
-  }
+  },
+  plugins:[
+    new ChangeOutPutPath()
+  ]
 }
+//plugin
+
+const hooks={
+  emitFile:new SyncHook(['context'])
+}
+function initPlugin(){
+  const plugins=webpackConfig.plugins;
+
+  plugins.forEach((plugins)=>{
+    plugins.apply(hooks)
+  })
+}
+initPlugin()
 //唯一ID
 let id=0;
 function createAsset(filePath) {
@@ -24,11 +42,14 @@ function createAsset(filePath) {
   });
   //loader
   const loaders=webpackConfig.module.rules;
- 
-
+  const loaderContext={
+    addDeps(dep){
+      console.log('addDeps', dep);
+    }
+  }
   loaders.forEach(({test,use})=>{
     if (test.test(filePath)){
-     source= use(source)
+      source = use.call(loaderContext,source)
     }
   })
   // console.log('source', source);
@@ -87,8 +108,15 @@ function build(graph){
     }
   })
   const code = ejs.render(template, {data});
+    let outputPath= './dist/bundle.js';
+  const context={
+    changeOutputPath(path){
+      outputPath=path
+    }
+  }
+  hooks.emitFile.call(context)
   // console.log('data', data);
- fs.writeFileSync('./dist/bundle.js',code)
+  fs.writeFileSync(outputPath,code)
 //  console.log('code',code);
 }
 build(graph)

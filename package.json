@@ -15,6 +15,7 @@
     "@babel/traverse": "^7.21.5",
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
-    "ejs": "^3.1.9"
+    "ejs": "^3.1.9",
+    "tapable": "^2.2.1"
   }
 }
