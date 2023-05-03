@@ -4,12 +4,33 @@ import traverse from "@babel/traverse";
 import {transformFromAst} from "babel-core"
 import path from "path";
 import ejs from "ejs";
+import {jsonLoader} from "./jsonLoader.js"
+const webpackConfig={
+  module:{
+    rules:[
+      {
+        test:/\.json$/,
+        use:jsonLoader
+      }
+    ]
+  }
+}
+//唯一ID
 let id=0;
 function createAsset(filePath) {
   // 1 获取文件的内容
-  const source = fs.readFileSync(filePath, {
+  let source = fs.readFileSync(filePath, {
     encoding: 'utf-8'
   });
+  //loader
+  const loaders=webpackConfig.module.rules;
+ 
+
+  loaders.forEach(({test,use})=>{
+    if (test.test(filePath)){
+     source= use(source)
+    }
+  })
   // console.log('source', source);
   // 2 获取依赖关系
   const ast = parser.parse(source, {
@@ -18,8 +39,6 @@ function createAsset(filePath) {
   const deps = []
   traverse.default(ast, {
     ImportDeclaration({ node }) {
-      //   console.log('import===========');
-      //  console.log('data',node.source.value);
       deps.push(node.source.value)
     }
   })
@@ -68,7 +87,7 @@ function build(graph){
     }
   })
   const code = ejs.render(template, {data});
-  console.log('data', data);
+  // console.log('data', data);
  fs.writeFileSync('./dist/bundle.js',code)
 //  console.log('code',code);
 }
